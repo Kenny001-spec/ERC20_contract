@@ -54,5 +54,63 @@ describe("DLToken Test", function () {
             
             expect(otherAccountBalance).to.equal(amountToTransfer);
         })
+
+        it("Should not allow transfer to zero address", async function () {
+            const { dltoken, owner } = await loadFixture(deployDLTokenFixure);
+            await expect(dltoken.transfer("0x0000000000000000000000000000000000000000", 100)).to.be.revertedWith("Address is not allowed");
+        });
+
+        // it("Should burn 5% of the transferred amount", async function () {
+        //     const { dltoken, owner, otherAccount } = await loadFixture(deployDLTokenFixure);
+        //     const initialSupply = await dltoken.getTotalSupply();
+        //     const amountToTransfer = 1000;
+        
+        //     await dltoken.transfer(otherAccount.address, amountToTransfer);
+        
+        //     const finalSupply = await dltoken.getTotalSupply();
+        //     const expectedBurnAmount = (amountToTransfer * 5) / 100;
+        //     const expectedSupply = initialSupply - expectedBurnAmount;
+        
+        //     expect(finalSupply).to.equal(expectedSupply);
+        // });
+        
+        
+    });
+
+    describe("Allowance and Approvals", function () {
+        it("Should approve tokens for delegated transfer", async function () {
+            const { dltoken, owner, otherAccount } = await loadFixture(deployDLTokenFixure);
+            const amountToApprove = 500;
+
+            await dltoken.approve(otherAccount.address, amountToApprove);
+
+            expect(await dltoken.allowance(owner.address, otherAccount.address)).to.equal(amountToApprove);
+        });
+
+        it("Should transfer tokens from approved account", async function () {
+            const { dltoken, owner, otherAccount } = await loadFixture(deployDLTokenFixure);
+            const amountToApprove = 500;
+            const amountToTransfer = 200;
+            
+            await dltoken.approve(otherAccount.address, amountToApprove);
+            await dltoken.connect(otherAccount).transferFrom(owner.address, otherAccount.address, amountToTransfer);
+            
+            expect(await dltoken.balanceOf(otherAccount.address)).to.equal(amountToTransfer);
+            expect(await dltoken.allowance(owner.address, otherAccount.address)).to.equal(amountToApprove - amountToTransfer);
+        });
+
+        it("Should not allow transfer from zero address", async function () {
+         
+            
+            it("Should not allow transfer exceeding allowance", async function () {
+            const { dltoken, owner, otherAccount } = await loadFixture(deployDLTokenFixure);
+            await dltoken.approve(otherAccount.address, 200);
+            await expect(dltoken.connect(otherAccount).transferFrom(owner.address, otherAccount.address, 300)).to.be.revertedWith("Address is not allowed");
+            });
+        });
+
     });
 });
+
+
+
